@@ -13,7 +13,9 @@ AoA = 0
 AoAR = AoA * (np.pi/180)
 numB = 8 #number of boundary points, that is, number of panel extremities
 
-airfoil_filepath = os.path.join('./selig1223.dat.txt')
+
+#naca0012.dat works, while naca0012v2.dat doesn't
+airfoil_filepath = os.path.join('./naca0012.dat')
 data = pd.read_table(airfoil_filepath,delim_whitespace=True,skiprows=[0],names=['x','y'],index_col=False)
 
 def plot_airfoil(x, y):
