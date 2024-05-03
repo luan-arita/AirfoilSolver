@@ -17,7 +17,7 @@ numB = 8 #number of boundary points, that is, number of panel extremities
 #naca0012.dat works, while naca0012v2.dat doesn't
 #apparently, naca0012v2.dat starts working when I remove the last line, which corresponds to basically the first coordinate and makes the loop closed. However, the code works with S1223.dat, which also has the last line equal to the first, so there must be another reason.
 
-airfoil_filepath = os.path.join('EPPLER 423.dat')
+airfoil_filepath = os.path.join('naca0012.dat')
 data = pd.read_table(airfoil_filepath,delim_whitespace=True,skiprows=[0],names=['x','y'],index_col=False)
 
 def plot_airfoil(x, y):
@@ -33,29 +33,44 @@ def plot_airfoil(x, y):
 
 def define_panels(x, y, N):
     R = (x.max() - x.min()) / 2
-    print("x max", x.max(), "x.min", x.min())
-    #print(R)
+    
     x_center = (x.max() + x.min()) / 2
+    print(x_center)
     x_circle = x_center + R*np.cos(np.linspace(0.0, 2*math.pi, N + 1))
-    #print(x_circle)
+    
     x_ends = np.copy(x_circle)
+
     y_ends = np.empty_like(x_ends)
-    #print(x_ends)
     x,y = np.append(x, x[0]), np.append(y, y[0])
-    #print(y_ends)
+
     a_list = []
     b_list = []
     I = 0
+    print(x_circle)
+    print(x_ends)
+    print(x_ends[25])
+    """The current problem is that, apparently, the while loop does not work properly.
+        It seems that it works only for I = 128.
+        After that, it goes to I = 130, which implies a I + 1 = 131, which is out of bounds.
+        Therefore, apparently there is no x_ends[i] that applies for the condition between x[I] and x[I+1]
+        x_ends[i] is not changing. It keeps equal to 1.0"""
     for i in range(N):
-        while I < len(x) - 2:
-            #print("I:", I, "x[I]:", x[I], "x_ends[i]:", x_ends[i])
-            #print("y[I]:", y[I], "\n")
-            if (x[I] <= x_ends[i] <= x[I + 1]) or (x[I + 1] <= x_ends[i] <= x[I]):
+        while I < len(x) - 1:
+            #print(I)
+            #print("I: ", I, "i: ", i)
+            #print("x[I]: ", x[I], "x_ends[i]: ", x_ends[i], "x[I+1]: ", x[I+1])
+            #print(x_ends)
+            
+            if (x[I] <= x_ends[i] <= x[I + 1]) or (x[I + 1] <= x_ends[i] <= x[I]) or x_ends[i] == 1.0:
                 break
             else:
                 I += 1
 
         #calculating slope of the two consecutive points
+        """print("I + 1: ", I + 1)
+        print("y[I]:", y[I])
+        print("y[I + 1]:", y[I + 1])"""
+        
         a = (y[I + 1] - y[I]) / (x[I + 1] - x[I])
         #calculates the intercept 'b', from y = ax + b. it could have been used either of the two points, in this case it is used x[I+1]
         b = y[I + 1] - a * x[I + 1]
@@ -63,11 +78,11 @@ def define_panels(x, y, N):
         b_list.append(b)
         #since we have the slope and intercept, we have the first degree equation of the two consecutive airfoil points. Since we already have the x coordinate, we can calculate the y coordinate
         y_ends[i] = a * x_ends[i] + b
-        print(y_ends)
+        
     y_ends[N] = y_ends[0]
 
-    print("a_list: ", a_list)
-    print("b_list: ", b_list)
+    #print("a_list: ", a_list)
+    #print("b_list: ", b_list)
     panels = np.empty(N, dtype = object)
     for i in range(N):
         panels[i] = (x_ends[i], y_ends[i])
