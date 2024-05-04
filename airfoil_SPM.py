@@ -17,7 +17,7 @@ numB = 8 #number of boundary points, that is, number of panel extremities
 #naca0012.dat works, while naca0012v2.dat doesn't
 #apparently, naca0012v2.dat starts working when I remove the last line, which corresponds to basically the first coordinate and makes the loop closed. However, the code works with S1223.dat, which also has the last line equal to the first, so there must be another reason.
 
-airfoil_filepath = os.path.join('naca0012.dat')
+airfoil_filepath = os.path.join('S1223.dat')
 data = pd.read_table(airfoil_filepath,delim_whitespace=True,skiprows=[0],names=['x','y'],index_col=False)
 
 def plot_airfoil(x, y):
@@ -54,11 +54,15 @@ def define_panels(x, y, N):
         After that, it goes to I = 130, which implies a I + 1 = 131, which is out of bounds.
         Therefore, apparently there is no x_ends[i] that applies for the condition between x[I] and x[I+1]
         x_ends[i] is not changing. It keeps equal to 1.0"""
+    
+    """If x_ends[i] is not between the two values, then while loop breaks and increments i += 1
+        If it is between the two values, then it increments I + 1 and interpolation calculations proceed as usual."""
+    
+    """For S1223.dat, it works for N = 50. However, if we increase to N = 100, it goes out of bounds at axis 81."""
     for i in range(N):
         while I < len(x) - 1:
-            #print(I)
-            #print("I: ", I, "i: ", i)
-            #print("x[I]: ", x[I], "x_ends[i]: ", x_ends[i], "x[I+1]: ", x[I+1])
+            print("I: ", I, "i: ", i)
+            print("x[I]: ", x[I], "x_ends[i]: ", x_ends[i], "x[I+1]: ", x[I+1])
             #print(x_ends)
             
             if (x[I] <= x_ends[i] <= x[I + 1]) or (x[I + 1] <= x_ends[i] <= x[I]) or x_ends[i] == 1.0:
@@ -91,7 +95,7 @@ def define_panels(x, y, N):
 
 #print(define_panels(data.x, data.y, 60))
 
-XB, YB = define_panels(data.x, data.y, 50)
+XB, YB = define_panels(data.x, data.y, 100)
 
 def plot_airfoil_interpolated(x, y):
     plt.figure()
