@@ -31,12 +31,20 @@ def plot_airfoil(x, y):
 
 #plot_airfoil(data.x, data.y)
 
+def round_up(a):
+    threshold = 0.001
+
+    if abs(a - round(a)) <= threshold:
+        return round(a, 2)
+    return a
+
 def define_panels(x, y, N):
     R = (x.max() - x.min()) / 2
     
     x_center = (x.max() + x.min()) / 2
     print(x_center)
     x_circle = x_center + R*np.cos(np.linspace(0.0, 2*math.pi, N + 1))
+
     
     x_ends = np.copy(x_circle)
 
@@ -46,9 +54,6 @@ def define_panels(x, y, N):
     a_list = []
     b_list = []
     I = 0
-    print(x_circle)
-    print(x_ends)
-    print(x_ends[25])
     """The current problem is that, apparently, the while loop does not work properly.
         It seems that it works only for I = 128.
         After that, it goes to I = 130, which implies a I + 1 = 131, which is out of bounds.
@@ -59,13 +64,17 @@ def define_panels(x, y, N):
         If it is between the two values, then it increments I + 1 and interpolation calculations proceed as usual."""
     
     """For S1223.dat, it works for N = 50. However, if we increase to N = 100, it goes out of bounds at axis 81."""
+
+    """The issue is that for some cases x_ends[i] does not go inbetween any value from x. This may occur if x_ends[i] is too close to 1."""
     for i in range(N):
         while I < len(x) - 1:
             print("I: ", I, "i: ", i)
-            print("x[I]: ", x[I], "x_ends[i]: ", x_ends[i], "x[I+1]: ", x[I+1])
+            print("x[I]: ", x[I], "x_ends[i]: ", round_up(x_ends[i]), "x[I+1]: ", round_up(x[I+1]))
             #print(x_ends)
             
-            if (x[I] <= x_ends[i] <= x[I + 1]) or (x[I + 1] <= x_ends[i] <= x[I]) or x_ends[i] == 1.0:
+            if (x[I] <= round_up(x_ends[i]) <= round_up(x[I + 1])) or (round_up(x[I + 1]) <= round_up(x_ends[i]) <= x[I]):
+                break
+            elif round_up(x_ends[i]) == 1:
                 break
             else:
                 I += 1
@@ -95,7 +104,7 @@ def define_panels(x, y, N):
 
 #print(define_panels(data.x, data.y, 60))
 
-XB, YB = define_panels(data.x, data.y, 100)
+XB, YB = define_panels(data.x, data.y, 200)
 
 def plot_airfoil_interpolated(x, y):
     plt.figure()
