@@ -17,7 +17,7 @@ numB = 8 #number of boundary points, that is, number of panel extremities
 #naca0012.dat works, while naca0012v2.dat doesn't
 #apparently, naca0012v2.dat starts working when I remove the last line, which corresponds to basically the first coordinate and makes the loop closed. However, the code works with S1223.dat, which also has the last line equal to the first, so there must be another reason.
 
-airfoil_filepath = os.path.join('S1223.dat')
+airfoil_filepath = os.path.join('EPPLER423.dat')
 data = pd.read_table(airfoil_filepath,delim_whitespace=True,skiprows=[0],names=['x','y'],index_col=False)
 
 def plot_airfoil(x, y):
@@ -33,7 +33,6 @@ def plot_airfoil(x, y):
 
 def round_up(a):
     threshold = 0.001
-
     if abs(a - round(a)) <= threshold:
         return round(a, 2)
     return a
@@ -50,15 +49,10 @@ def define_panels(x, y, N):
 
     y_ends = np.empty_like(x_ends)
     x,y = np.append(x, x[0]), np.append(y, y[0])
-
-    a_list = []
-    b_list = []
+    print(x)
+    print(len(x))
     I = 0
-    """The current problem is that, apparently, the while loop does not work properly.
-        It seems that it works only for I = 128.
-        After that, it goes to I = 130, which implies a I + 1 = 131, which is out of bounds.
-        Therefore, apparently there is no x_ends[i] that applies for the condition between x[I] and x[I+1]
-        x_ends[i] is not changing. It keeps equal to 1.0"""
+
     
     """If x_ends[i] is not between the two values, then while loop breaks and increments i += 1
         If it is between the two values, then it increments I + 1 and interpolation calculations proceed as usual."""
@@ -66,36 +60,32 @@ def define_panels(x, y, N):
     """For S1223.dat, it works for N = 50. However, if we increase to N = 100, it goes out of bounds at axis 81."""
 
     """The issue is that for some cases x_ends[i] does not go inbetween any value from x. This may occur if x_ends[i] is too close to 1."""
+
+    """Now the issue is that for the leading edge the panels are inaccurate since the iteration gets stuck in values near zero."""
     for i in range(N):
+        count = 0
         while I < len(x) - 1:
             print("I: ", I, "i: ", i)
-            print("x[I]: ", x[I], "x_ends[i]: ", round_up(x_ends[i]), "x[I+1]: ", round_up(x[I+1]))
-            #print(x_ends)
+            print("x[I]: ", round_up(x[I]), "x_ends[i]: ", round_up(x_ends[i]), "x[I+1]: ", round_up(x[I+1]))
+            print(len(x) - 1)
+            print(I < len(x) - 1)
             
-            if (x[I] <= round_up(x_ends[i]) <= round_up(x[I + 1])) or (round_up(x[I + 1]) <= round_up(x_ends[i]) <= x[I]):
+            if (round_up(x[I]) <= round_up(x_ends[i]) <= round_up(x[I + 1])) or (round_up(x[I + 1]) <= round_up(x_ends[i]) <= round_up(x[I])):
                 break
             elif round_up(x_ends[i]) == 1:
                 break
             else:
                 I += 1
 
-        #calculating slope of the two consecutive points
-        """print("I + 1: ", I + 1)
-        print("y[I]:", y[I])
-        print("y[I + 1]:", y[I + 1])"""
-        
+        #calculating slope of the two consecutive points        
         a = (y[I + 1] - y[I]) / (x[I + 1] - x[I])
         #calculates the intercept 'b', from y = ax + b. it could have been used either of the two points, in this case it is used x[I+1]
         b = y[I + 1] - a * x[I + 1]
-        a_list.append(a)
-        b_list.append(b)
         #since we have the slope and intercept, we have the first degree equation of the two consecutive airfoil points. Since we already have the x coordinate, we can calculate the y coordinate
         y_ends[i] = a * x_ends[i] + b
         
     y_ends[N] = y_ends[0]
 
-    #print("a_list: ", a_list)
-    #print("b_list: ", b_list)
     panels = np.empty(N, dtype = object)
     for i in range(N):
         panels[i] = (x_ends[i], y_ends[i])
@@ -104,7 +94,7 @@ def define_panels(x, y, N):
 
 #print(define_panels(data.x, data.y, 60))
 
-XB, YB = define_panels(data.x, data.y, 200)
+XB, YB = define_panels(data.x, data.y, 100)
 
 def plot_airfoil_interpolated(x, y):
     plt.figure()
