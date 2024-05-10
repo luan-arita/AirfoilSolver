@@ -14,25 +14,23 @@ AoAR = AoA * (np.pi/180)
 numB = 8 #number of boundary points, that is, number of panel extremities
 
 
-#naca0012.dat works, while naca0012v2.dat doesn't
-#apparently, naca0012v2.dat starts working when I remove the last line, which corresponds to basically the first coordinate and makes the loop closed. However, the code works with S1223.dat, which also has the last line equal to the first, so there must be another reason.
 
-airfoil_filepath = os.path.join('EPPLER423.dat')
-data = pd.read_table(airfoil_filepath,delim_whitespace=True,skiprows=[0],names=['x','y'],index_col=False)
+airfoil_filepath = os.path.join('./airfoils/xefofo4412.dat')
+#.dat file must have its name on the first line. skiprows = [0] properly skips it
+data = pd.read_table(airfoil_filepath,delim_whitespace=True, skiprows=[0], names=['x','y'],index_col=False)
+
 
 def plot_airfoil(x, y):
     plt.figure()
     plt.plot(x, y, 'r',marker='.',markeredgecolor='black', markersize=3)
-    #plt.plot(0.5*data.x+0.3,0.5*data.y) #Scale & translate the datapoints
     plt.axis('equal')
     plt.xlim((-0.05, 1.05))
-    #plt.legend(['GOE 383 AIRFOIL','SCALED AIRFOIL'])
     plt.show()
 
 #plot_airfoil(data.x, data.y)
 
 def round_up(a):
-    threshold = 0.001
+    threshold = 0.01
     if abs(a - round(a)) <= threshold:
         return round(a, 2)
     return a
@@ -41,41 +39,24 @@ def define_panels(x, y, N):
     R = (x.max() - x.min()) / 2
     
     x_center = (x.max() + x.min()) / 2
-    print(x_center)
     x_circle = x_center + R*np.cos(np.linspace(0.0, 2*math.pi, N + 1))
 
     
     x_ends = np.copy(x_circle)
 
     y_ends = np.empty_like(x_ends)
-    x,y = np.append(x, x[0]), np.append(y, y[0])
-    print(x)
-    print(len(x))
     I = 0
 
-    
-    """If x_ends[i] is not between the two values, then while loop breaks and increments i += 1
-        If it is between the two values, then it increments I + 1 and interpolation calculations proceed as usual."""
-    
-    """For S1223.dat, it works for N = 50. However, if we increase to N = 100, it goes out of bounds at axis 81."""
-
-    """The issue is that for some cases x_ends[i] does not go inbetween any value from x. This may occur if x_ends[i] is too close to 1."""
-
-    """Now the issue is that for the leading edge the panels are inaccurate since the iteration gets stuck in values near zero."""
     for i in range(N):
-        count = 0
         while I < len(x) - 1:
-            print("I: ", I, "i: ", i)
-            print("x[I]: ", round_up(x[I]), "x_ends[i]: ", round_up(x_ends[i]), "x[I+1]: ", round_up(x[I+1]))
-            print(len(x) - 1)
-            print(I < len(x) - 1)
+            #print("I: ", I, "i: ", i)
+            #print("x[I]: ", round_up(x[I]), "x_ends[i]: ", round_up(x_ends[i]), "x[I+1]: ", round_up(x[I+1]))
             
-            if (round_up(x[I]) <= round_up(x_ends[i]) <= round_up(x[I + 1])) or (round_up(x[I + 1]) <= round_up(x_ends[i]) <= round_up(x[I])):
-                break
-            elif round_up(x_ends[i]) == 1:
+            if (x[I] <= x_ends[i] <= x[I + 1]) or (x[I + 1] <= x_ends[i] <= x[I]):
                 break
             else:
                 I += 1
+
 
         #calculating slope of the two consecutive points        
         a = (y[I + 1] - y[I]) / (x[I + 1] - x[I])
