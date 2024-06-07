@@ -15,7 +15,7 @@ numB = 8 #number of boundary points, that is, number of panel extremities
 
 
 
-airfoil_filepath = os.path.join('./airfoils/xefofo4412.dat')
+airfoil_filepath = os.path.join('./airfoils/naca0012.dat')
 #.dat file must have its name on the first line. skiprows = [0] properly skips it
 data = pd.read_table(airfoil_filepath,delim_whitespace=True, skiprows=[0], names=['x','y'],index_col=False)
 
@@ -75,18 +75,8 @@ def define_panels(x, y, N):
 
 #print(define_panels(data.x, data.y, 60))
 
-XB, YB = define_panels(data.x, data.y, 100)
+XB, YB = define_panels(data.x, data.y, 150)
 
-def plot_airfoil_interpolated(x, y):
-    plt.figure()
-    plt.plot(XB, YB, 'r',marker='.',markeredgecolor='black', markersize=3)
-    #plt.plot(0.5*data.x+0.3,0.5*data.y) #Scale & translate the datapoints
-    plt.axis('equal')
-    plt.xlim((-0.05, 1.05))
-    #plt.legend(['GOE 383 AIRFOIL','SCALED AIRFOIL'])
-    plt.show()
-
-plot_airfoil(XB, YB)
 
 numPts = len(XB)
 numPan = numPts - 1
@@ -262,3 +252,31 @@ print("CL      : ",CL)
 print("CD      : ",CD)                                                         
 print("CM      : ",CM)   
 
+# %%PLOTTING
+def plot_airfoil_interpolated(x, y):
+    plt.figure()
+    plt.plot(XB, YB, 'r',marker='.',markeredgecolor='black', markersize=3)
+    #plt.plot(0.5*data.x+0.3,0.5*data.y) #Scale & translate the datapoints
+    plt.axis('equal')
+    plt.xlim((-0.05, 1.05))
+    #plt.legend(['GOE 383 AIRFOIL','SCALED AIRFOIL'])
+    plt.show()
+
+#plot_airfoil(XB, YB)
+
+def plot_pressure():
+    plt.figure()
+    plt.cla()
+    midIndS = int(np.floor(len(Cp)/2))
+    plt.plot(XC[midIndS+1:len(XC)], Cp[midIndS+1:len(XC)], 'ks', markerfacecolor='b', label='VPM Upper')
+    plt.plot(XC[0:midIndS], Cp[0:midIndS], 'ks', markerfacecolor='r', label='VPM Lower')
+    plt.xlim(0,1)
+    #plt.ylim(-3, 3)
+    plt.xlabel('X Coordinate')
+    plt.ylabel('Cp')
+    plt.title('Pressure Coefficient')
+    plt.show()
+    plt.legend()
+    plt.gca().invert_yaxis()
+
+plot_pressure()
